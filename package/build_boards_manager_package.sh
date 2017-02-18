@@ -1,6 +1,8 @@
 #!/bin/bash
 #
-next="2.4.0"
+
+# Extract next version from platform.txt
+next=`sed -n -E 's/version=([0-9.]+)/\1/p' ../platform.txt`
 
 # Figure out how will the package be called
 ver=`git describe --exact-match`
@@ -27,14 +29,14 @@ fi
 echo "Remote: $REMOTE_URL"
 
 if [ -z "$PKG_URL" ]; then
-    PKG_URL="$REMOTE_URL/versions/$ver/$package_name.zip"
+    if [ -z "$PKG_URL_PREFIX" ]; then
+        PKG_URL_PREFIX="$REMOTE_URL/versions/$ver"
+    fi
+    PKG_URL="$PKG_URL_PREFIX/$package_name.zip"
 fi
 echo "Package: $PKG_URL"
-
-if [ -z "$DOC_URL" ]; then
-    DOC_URL="$REMOTE_URL/versions/$ver/doc/reference.html"
-fi
 echo "Docs: $DOC_URL"
+
 pushd ..
 # Create directory for the package
 outdir=package/versions/$ver/$package_name
@@ -104,13 +106,17 @@ echo "Making package_esp8266com_index.json"
 
 jq_arg=".packages[0].platforms[0].version = \"$ver\" | \
     .packages[0].platforms[0].url = \"$PKG_URL\" |\
-    .packages[0].platforms[0].archiveFileName = \"$package_name.zip\" |\
-    .packages[0].platforms[0].help.online = \"$DOC_URL\""
+    .packages[0].platforms[0].archiveFileName = \"$package_name.zip\""
 
 if [ -z "$is_nightly" ]; then
     jq_arg="$jq_arg |\
         .packages[0].platforms[0].size = \"$size\" |\
         .packages[0].platforms[0].checksum = \"SHA-256:$sha\" |"
+fi
+
+if [ ! -z "$DOC_URL" ]; then
+    jq_arg="$jq_arg |\
+        .packages[0].platforms[0].help.online = \"$DOC_URL\""
 fi
 
 cat $srcdir/package/package_esp8266com_index.template.json | \
