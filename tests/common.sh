@@ -114,6 +114,7 @@ function run_travis_ci_build()
 {
     export CXX="g++-4.8" CC="gcc-4.8" GCOV="gcov-4.8"
     echo -e "travis_fold:start:host_tests"
+    cd $TRAVIS_BUILD_DIR/tests
     run_host_tests
     echo -e "travis_fold:end:host_tests"
     echo -e "travis_fold:start:sketch_test_env_prepare"
@@ -137,7 +138,7 @@ set -e
 
 if [ "$BUILD_TYPE" = "deploy_nightly_package" ]; then 
     packages/deploy_nightly_package.sh
-elif [ "$BUILD_TYPE" = "build"]; then
+elif [ "$BUILD_TYPE" = "build" ]; then
     run_travis_ci_build
 fi
 
